@@ -2,7 +2,8 @@ package edu.hsutx;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Hashmap;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CSpaceGraph extends WeightedDirectedGraph {
 
@@ -32,10 +33,10 @@ public class CSpaceGraph extends WeightedDirectedGraph {
 
         int count = 1;
 
-        for (int i=0; i<rows; i++) {
-            for (int j=0; j<columns; j++) {
-                if (cspace[i][j] == 0) {
-                    Point p = new Point(i, j);
+        for (int x=0; x<rows; x++) {
+            for (int y=0; y<columns; y++) {
+                if (cspace[x][y] == 0) {
+                    Point p = new Point(y, x);
                     pointToVertex.put(p, count);
                     vertexToPoint.put(count, p);
                     count++;
@@ -45,35 +46,36 @@ public class CSpaceGraph extends WeightedDirectedGraph {
 
         int [][] directions = { // N, NE, E, SE, S, SW, W, NW
             {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}
-        }
+        };
 
-        for (int i=0; i<rows; i++) {
-            for (int j=0; j<columns; j++) {
-                if (cspace[i][j] == 0) {
-                    Point current = new Point(i, j);
+        for (int x=0; x<rows; x++) {
+            for (int y=0; y<columns; y++) {
+                if (cspace[x][y] == 0) {
+                    Point current = new Point(y, x);
                     int fromVertex = pointToVertex.get(current);
 
                     for (int k=0; k<directions.length; k++) {
-                        int x = i + directions[k][0];
-                        int y = i + directions[k][1];
+                        int nx = x + directions[k][0];
+                        int ny = y + directions[k][1];
 
-                        if (x >= 0 && x < rows && y >= 0 && y < columns) {
-                            if (cspace[x][y] == 0) {
-                                Point neighbor = new Point(x, y);
-                                int toVertex = pointToVertex.get(neighbor);
+                        if (nx >= 0 && nx < rows && ny >= 0 && ny < columns) {
+                            Point neighbor = new Point(ny, nx);
+                            int toVertex = pointToVertex.get(neighbor);
 
-                                int dx = directions[k][0];
-                                int dy = directions[k][1];
-                                double weight;
+                            int dx = directions[k][0];
+                            int dy = directions[k][1];
+                            double weight;
 
-                                if (dx!= 0 && dy != 0) {
-                                    weight = Math.sqrt(2);
+                            if (dx != 0 && dy != 0) { // diagonal
+                                if (cspace[x][ny] == 0 && cspace[nx][y] == 0) {
+                                        weight = Math.sqrt(2);
+                                        edges.add(new Edge(fromVertex, toVertex, weight));
                                 }
-                                else {
+                                  
+                                else { // straight
                                     weight = 1.0;
+                                    edges.add(new Edge(fromVertex, toVertex, weight));
                                 }
-
-                                edges.add(new Edge(fromVertex, toVertex, weight));
                             }
                         }
                     }
@@ -82,13 +84,13 @@ public class CSpaceGraph extends WeightedDirectedGraph {
         }
 
         super.numVertices = count - 1;
-        super. adjacencyList = new ArrayList<>(count + 1);
+        super.adjacencyList = new ArrayList<>(count + 1);
 
-        for (int i=0; i<count; i++) {
+        for (int i=0; i<=count; i++) {
             super.adjacencyList.add(new ArrayList<Edge>());
         }
 
-        for (int i=0 i<edges.size(); i++) {
+        for (int i=0; i<edges.size(); i++) {
             Edge e = edges.get(i);
             super.adjacencyList.get(e.getStart()).add(e);
         }
@@ -101,12 +103,12 @@ public class CSpaceGraph extends WeightedDirectedGraph {
      * @return
      */
     public Point[] getDijkstrasPath(Point start, Point end) {
-        Integer start = pointToVertex.get(start);
-        Integer end = pointToVertex.get(end);
+        Integer startV = pointToVertex.get(start);
+        Integer endV = pointToVertex.get(end);
 
-        if (start == null || end == null) return new Point[0];
+        if (startV == null || endV == null) return new Point[0];
 
-        int[] path = super.getDijkstrasPath(start, end);
+        int[] path = super.getDijkstrasPath(startV, endV);
 
         if (path == null) return new Point[0];
 

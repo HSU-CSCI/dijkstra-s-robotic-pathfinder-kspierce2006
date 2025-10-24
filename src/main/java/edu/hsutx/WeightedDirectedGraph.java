@@ -8,8 +8,8 @@ import java.util.PriorityQueue;
 import java.util.Stack;
 
 public class WeightedDirectedGraph {
-    private List<List<Edge>> adjacencyList;
-    private int numVertices;  
+    protected List<List<Edge>> adjacencyList;
+    protected int numVertices;  
 
     /***
      *
