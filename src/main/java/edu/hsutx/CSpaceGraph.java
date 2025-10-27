@@ -1,16 +1,18 @@
 package edu.hsutx;
 
+/***
+ * Author: Kailey Pierce
+ * 
+ * LLM use: ChatGPT was used to help debug and troubleshoot the code, 
+ * we found the error was incorrectly inputed x, y coordinates 
+ */
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 public class CSpaceGraph extends WeightedDirectedGraph {
-
     private int[][] cspace;
-    private Map<Point, Integer> pointToVertex = new HashMap<>();
-    private Map<Integer, Point> vertexToPoint = new HashMap<>();
-
+    private int rows, columns;
     /***
      * Convert a cspace to weighted, directed graph
      * a cspace is a 2d matrix representing a robot's ability to navigate through a location in physical space.
@@ -26,73 +28,57 @@ public class CSpaceGraph extends WeightedDirectedGraph {
         super(1, new ArrayList<Edge>());
         this.cspace = cspace;
 
-        int rows = cspace.length;
-        int columns = cspace[0].length;
+        rows = 300;
+        columns = 300;
 
         ArrayList<Edge> edges = new ArrayList<>();
 
-        int count = 1;
-
-        for (int x=0; x<rows; x++) {
-            for (int y=0; y<columns; y++) {
-                if (cspace[x][y] == 0) {
-                    Point p = new Point(y, x);
-                    pointToVertex.put(p, count);
-                    vertexToPoint.put(count, p);
-                    count++;
-                }
-            }
-        }
-
         int [][] directions = { // N, NE, E, SE, S, SW, W, NW
-            {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}
+            {-1, 0}, {-1, 1}, {0, 1}, {1, 1}, 
+            {1, 0}, {1, -1}, {0, -1}, {-1, -1}
         };
 
-        for (int x=0; x<rows; x++) {
-            for (int y=0; y<columns; y++) {
-                if (cspace[x][y] == 0) {
-                    Point current = new Point(y, x);
-                    int fromVertex = pointToVertex.get(current);
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < columns; c++) {
+                
+                if (cspace[c][r] != 0) continue;
 
-                    for (int k=0; k<directions.length; k++) {
-                        int nx = x + directions[k][0];
-                        int ny = y + directions[k][1];
+                int fromVertex = r * columns + c;
 
-                        if (nx >= 0 && nx < rows && ny >= 0 && ny < columns) {
-                            Point neighbor = new Point(ny, nx);
-                            int toVertex = pointToVertex.get(neighbor);
+                for (int k = 0; k < directions.length; k++) {
+                    int dr = directions[k][0];
+                    int dc = directions[k][1];
+                    int newRow = r + dr;
+                    int newCol = c + dc;
 
-                            int dx = directions[k][0];
-                            int dy = directions[k][1];
-                            double weight;
+                    boolean diagonal = (dr != 0 && dc != 0);
 
-                            if (dx != 0 && dy != 0) { // diagonal
-                                if (cspace[x][ny] == 0 && cspace[nx][y] == 0) {
-                                        weight = Math.sqrt(2);
-                                        edges.add(new Edge(fromVertex, toVertex, weight));
-                                }
-                                  
-                                else { // straight
-                                    weight = 1.0;
-                                    edges.add(new Edge(fromVertex, toVertex, weight));
-                                }
-                            }
-                        }
+                    if (diagonal) {
+                        if (cspace[c][r + dr] != 0 || cspace[c + dc][r] != 0) continue;
+                    }  
+                    else {
+                        int midR = (r + newRow) / 2;
+                        int midC = (c + newCol) / 2;
+                        if (cspace[midC][midR] != 0) continue;
                     }
+                    
+                    int toVertex = newRow * columns + newCol;
+                    double weight = diagonal ? Math.sqrt(2) : 1.0;
+                    edges.add(new Edge(fromVertex, toVertex, weight));
                 }
             }
         }
 
-        super.numVertices = count - 1;
-        super.adjacencyList = new ArrayList<>(count + 1);
-
-        for (int i=0; i<=count; i++) {
+        super.numVertices = rows * columns;
+        super.adjacencyList = new ArrayList<>(super.numVertices + 1);
+        for (int i=0; i<=super.numVertices; i++) {
             super.adjacencyList.add(new ArrayList<Edge>());
         }
 
-        for (int i=0; i<edges.size(); i++) {
-            Edge e = edges.get(i);
-            super.adjacencyList.get(e.getStart()).add(e);
+        for (Edge e : edges) {
+            if (e.getStart() <= super.numVertices && e.getEnd() <= super.numVertices) {
+                super.adjacencyList.get(e.getStart()).add(e);
+            }
         }
     }
 
@@ -103,18 +89,19 @@ public class CSpaceGraph extends WeightedDirectedGraph {
      * @return
      */
     public Point[] getDijkstrasPath(Point start, Point end) {
-        Integer startV = pointToVertex.get(start);
-        Integer endV = pointToVertex.get(end);
-
-        if (startV == null || endV == null) return new Point[0];
+        int startV = start.getY() * columns + start.getX();
+        int endV = end.getY() * columns + end.getX();
 
         int[] path = super.getDijkstrasPath(startV, endV);
 
-        if (path == null) return new Point[0];
+        if (path == null || path.length == 0) return new Point[0];
 
         Point[] pointList = new Point[path.length];
         for (int i=0; i<path.length; i++) {
-            pointList[i] = vertexToPoint.get(path[i]);
+            int v = path[i] - 1;
+            int row = v / columns;
+            int col = v % columns;
+            pointList[i] = new Point(col, row);
         }
 
         return pointList;

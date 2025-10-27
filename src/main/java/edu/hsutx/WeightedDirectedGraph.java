@@ -246,7 +246,7 @@ public class WeightedDirectedGraph {
 
         int [] path = new int [pathList.size()];
         for (k=0; k<pathList.size(); k++) {
-            path[i] = pathList.get(i);
+            path[k] = pathList.get(k);
         }
 
         if (Double.isInfinite(distance[end])) return null;

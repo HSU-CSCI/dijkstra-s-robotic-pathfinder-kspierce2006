@@ -63,6 +63,7 @@ public class PathFinder {
 
         // Create our graph
         CSpaceGraph graph = new CSpaceGraph(array);
+        
 
         // Get our Dijkstra Path from point 130, 20 to point 280, 50
         Point[] pointList = graph.getDijkstrasPath(new Point(130,20), new Point(280,50));
